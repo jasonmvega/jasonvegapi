@@ -1,0 +1,109 @@
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_11-33-05.jpg
+📂 Created new album 'Photo_2025-09-22_11-33-05' with ID AHwAS5BZ8MK5xqDIJA0u3x4JZPcyC8T3Bl-gd5vt77XD7unL6g80Gc--SP6i4CW9rt2yj51o_ybq
+✅ Uploaded photo into new album 'Photo_2025-09-22_11-33-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_11-34-05.jpg
+📂 Created new album 'Photo_2025-09-22_11-34-05' with ID AHwAS5ABLNeSHlC9wfH-RZbrEw90cR6oHteCza9vG-64G7KdecPu60C9teiyWYVgoK7ixLQjTcLq
+✅ Uploaded photo into new album 'Photo_2025-09-22_11-34-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_11-35-05.jpg
+📂 Created new album 'Photo_2025-09-22_11-35-05' with ID AHwAS5BSsrl5pKw7UWw0PcTcUWjlXHLERLNvcJ00xdJAKtEUVa_8Vp_la3qwIrqOynat9eAE1Grh
+✅ Uploaded photo into new album 'Photo_2025-09-22_11-35-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_11-36-05.jpg
+📂 Created new album 'Photo_2025-09-22_11-36-05' with ID AHwAS5AaxX_DbqdVUBNWUptoKfm0hP_Dxby9H4CJoj8K8GsnqjcLSFVdDBnRbB9hBGoM0tmUPh1e
+✅ Uploaded photo into new album 'Photo_2025-09-22_11-36-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_11-37-04.jpg
+📂 Created new album 'Photo_2025-09-22_11-37-04' with ID AHwAS5CUc1sHOAWu-1ntnpbzgfdqnFLsvaZTpOSwq_jp0JaHAUz02XziLsi5R8dJ0dBOFIP87PwA
+✅ Uploaded photo into new album 'Photo_2025-09-22_11-37-04'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_11-38-05.jpg
+📂 Created new album 'Photo_2025-09-22_11-38-05' with ID AHwAS5DiUXnV5yGTwZVroTZAdoBKWxbz7tBbupPmwQhDDowf0ZaOZXYPC9Qc6WQ8LaRnSYE2iltZ
+✅ Uploaded photo into new album 'Photo_2025-09-22_11-38-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-22_12-00-05.jpg
+📂 Created new album 'Photo_2025-09-22_12-00-05' with ID AHwAS5BCIMLVJZ2FnPnGWSmyt0qVTz896v2pP9VhKqUErJEKboKP8NDtYolNeJEuNdium78zDL-q
+✅ Uploaded photo into new album 'Photo_2025-09-22_12-00-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-23_12-00-05.jpg
+📂 Created new album 'Photo_2025-09-23_12-00-05' with ID AHwAS5AgbT4tY_x-hb5FFXyCZqwr1wYPxtgbqkEWu-HBRbY-1DFo_jnUnvNYNx2WGbpAyDIgjoFf
+✅ Uploaded photo into new album 'Photo_2025-09-23_12-00-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-24_12-00-05.jpg
+📂 Created new album 'Photo_2025-09-24_12-00-05' with ID AHwAS5Abj9MZx3OCz8EguaFcHCnDEWjWr0x3q2xEdno3CvyZ6PgisQFhxVADmPLtVflHVXsHUbQj
+✅ Uploaded photo into new album 'Photo_2025-09-24_12-00-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-25_12-00-05.jpg
+📂 Created new album 'Photo_2025-09-25_12-00-05' with ID AHwAS5ApBWGtXjCC3lCY4l5yLAHOqG5SFRKGky7nGjT6b3DaQM_ZhZZHpnVUSns7P3Oz9gURtY2M
+✅ Uploaded photo into new album 'Photo_2025-09-25_12-00-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-26_12-00-04.jpg
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 383, in _make_request
+    self._validate_conn(conn)
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 1017, in _validate_conn
+    conn.connect()
+  File "/usr/lib/python3/dist-packages/urllib3/connection.py", line 411, in connect
+    self.sock = ssl_wrap_socket(
+  File "/usr/lib/python3/dist-packages/urllib3/util/ssl_.py", line 449, in ssl_wrap_socket
+    ssl_sock = _ssl_wrap_socket_impl(
+  File "/usr/lib/python3/dist-packages/urllib3/util/ssl_.py", line 493, in _ssl_wrap_socket_impl
+    return ssl_context.wrap_socket(sock, server_hostname=server_hostname)
+  File "/usr/lib/python3.9/ssl.py", line 500, in wrap_socket
+    return self.sslsocket_class._create(
+  File "/usr/lib/python3.9/ssl.py", line 1073, in _create
+    self.do_handshake()
+  File "/usr/lib/python3.9/ssl.py", line 1342, in do_handshake
+    self._sslobj.do_handshake()
+socket.timeout: _ssl.c:1120: The handshake operation timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/requests/adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 756, in urlopen
+    retries = retries.increment(
+  File "/usr/lib/python3/dist-packages/urllib3/util/retry.py", line 534, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/usr/lib/python3/dist-packages/six.py", line 719, in reraise
+    raise value
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 700, in urlopen
+    httplib_response = self._make_request(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 386, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=conn.timeout)
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 337, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Read timed out. (read timeout=120)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/jasonvega/.local/lib/python3.9/site-packages/google/auth/transport/requests.py", line 187, in __call__
+    response = self.session.request(
+  File "/usr/lib/python3/dist-packages/requests/sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/usr/lib/python3/dist-packages/requests/sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+  File "/usr/lib/python3/dist-packages/requests/adapters.py", line 529, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Read timed out. (read timeout=120)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/jasonvega/Desktop/cameratest.py", line 111, in <module>
+    upload_to_new_album(file_path, f"Photo_{timestamp}")
+  File "/home/jasonvega/Desktop/cameratest.py", line 52, in upload_to_new_album
+    creds = google_auth()
+  File "/home/jasonvega/Desktop/cameratest.py", line 28, in google_auth
+    creds.refresh(Request())
+  File "/home/jasonvega/.local/lib/python3.9/site-packages/google/oauth2/credentials.py", line 409, in refresh
+    ) = reauth.refresh_grant(
+  File "/home/jasonvega/.local/lib/python3.9/site-packages/google/oauth2/reauth.py", line 333, in refresh_grant
+    response_status_ok, response_data, retryable_error = _client._token_endpoint_request_no_throw(
+  File "/home/jasonvega/.local/lib/python3.9/site-packages/google/oauth2/_client.py", line 192, in _token_endpoint_request_no_throw
+    response = request(
+  File "/home/jasonvega/.local/lib/python3.9/site-packages/google/auth/transport/requests.py", line 194, in __call__
+    raise new_exc from caught_exc
+google.auth.exceptions.TransportError: HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Read timed out. (read timeout=120)
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-27_12-00-05.jpg
+📂 Created new album 'Photo_2025-09-27_12-00-05' with ID AHwAS5AdDEHtX6uHG19_y9lzvXDEx7v5NRyeFsnLMQ_26afm-L0qqeSeoo-rAXyYgg4TYFWYN3pf
+✅ Uploaded photo into new album 'Photo_2025-09-27_12-00-05'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-28_12-00-04.jpg
+📂 Created new album 'Photo_2025-09-28_12-00-04' with ID AHwAS5AEeiGxt6O6byMYyudwYcz9CpDtv0Zfe06iScWVOpwA-xkMFwTYnvqQzewtsjqKksWvhMBc
+✅ Uploaded photo into new album 'Photo_2025-09-28_12-00-04'
+📷 Saved photo: /home/jasonvega/Desktop/image_2025-09-29_12-00-04.jpg
+📂 Created new album 'Photo_2025-09-29_12-00-04' with ID AHwAS5DVUWw5vi03qXTa83Z_jWZYFEnx8Ad0V-rO_qvvVQ23W8TiMg13L_4eOHZM9_7tB1oluqwP
+✅ Uploaded photo into new album 'Photo_2025-09-29_12-00-04'
