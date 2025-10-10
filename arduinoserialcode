@@ -1,0 +1,24 @@
+#include <ArdusatSDK.h>
+
+// Create sensor objects
+UVLight uv;
+Temperature temp;
+
+void setup() {
+  Serial.begin(9600);
+
+  uv.begin();
+  temp.begin();
+}
+
+void loop() {
+  // Read UV
+  uv.read();
+  Serial.println(uv.readToJSON("UV"));
+
+  // Read temperature
+  temp.read();
+  Serial.println(temp.readToJSON("AmbientTemp"));
+
+  delay(1000); // send once per second
+}
