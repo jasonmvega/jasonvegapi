@@ -13,8 +13,8 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '1fTo3iM-Cx3aHHIhCSZdE_poF8YB6l79xb78klvEHR98'
 RANGE_NAME = 'Sheet5!A:D'  # timestamp, sensor, value, unit
 BASE_DIR = "/home/jasonvega/project"
-CREDENTIALS_PATH = os.path.join(BASE_DIR, "credentials.json")
-TOKEN_PATH = os.path.join(BASE_DIR, "token.json")
+CREDENTIALS_PATH = os.path.join(BASE_DIR, "sheets_credentials.json")
+TOKEN_PATH = os.path.join(BASE_DIR, "sheets_token.json")
 SERIAL_PORT = '/dev/ttyACM0'
 BAUD_RATE = 9600
 # ====================
