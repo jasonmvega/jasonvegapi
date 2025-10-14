@@ -1,74 +1,76 @@
-The data from the moisture sensors is **stored in memory** inside the `Moisture` class, specifically in the `_history` attribute. Here’s how it works:
 
----
+import time
+import datetime
+import os
+from grow.moisture import MoistureSensor
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
 
-### 1. **Moisture Class Internal Storage**
+# ------------------------------------
+# CONFIGURATION
+# ------------------------------------
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'  # <-- paste from Google Sheets URL
+RANGE_NAME = 'Sheet1!A:D'
+CREDENTIALS_FILE = '/home/pi/project/credentials.json'
+TOKEN_FILE = '/home/pi/project/token.json'
 
-In [moisture.py](https://github.com/jasonmvega/jasonvegapi/blob/main/moisture.py):
+# ------------------------------------
+# GOOGLE AUTH SETUP
+# ------------------------------------
+def get_service():
+    creds = None
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
+            creds = flow.run_local_server(port=0)
+        with open(TOKEN_FILE, 'w') as token:
+            token.write(creds.to_json())
+    return build('sheets', 'v4', credentials=creds)
 
-```python name=moisture.py url=https://github.com/jasonmvega/jasonvegapi/blob/main/moisture.py
-class Moisture(object):
-    def __init__(self, channel=1, wet_point=None, dry_point=None):
-        ...
-        self._history = []
-        self._history_length = 200
-        ...
-```
+# ------------------------------------
+# READ MOISTURE DATA
+# ------------------------------------
+def read_moisture():
+    sensor = MoistureSensor()
+    readings = sensor.read_all()  # returns list of 3 moisture values
+    return readings
 
-- The attribute `self._history` is a Python list that holds the most recent moisture readings (pulses/sec).
-- The length of this history is capped at 200 readings (`self._history_length = 200`).
+# ------------------------------------
+# APPEND TO SHEETS
+# ------------------------------------
+def append_to_sheet(service, data):
+    values = [[
+        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        data[0],
+        data[1],
+        data[2]
+    ]]
+    body = {'values': values}
+    service.spreadsheets().values().append(
+        spreadsheetId=SPREADSHEET_ID,
+        range=RANGE_NAME,
+        valueInputOption='RAW',
+        insertDataOption='INSERT_ROWS',
+        body=body
+    ).execute()
 
----
+# ------------------------------------
+# MAIN LOOP
+# ------------------------------------
+def main():
+    service = get_service()
+    while True:
+        moisture_data = read_moisture()
+        append_to_sheet(service, moisture_data)
+        print(f"{datetime.datetime.now()} → Uploaded moisture data: {moisture_data}")
+        time.sleep(300)  # every 5 minutes (change as needed)
 
-### 2. **How Readings Are Stored**
-
-The readings are added in the `_event_handler` method:
-
-```python
-def _event_handler(self, pin):
-    self._count += 1
-    self._last_pulse = time.time()
-    if self._time_elapsed >= 1.0:
-        self._reading = self._count / self._time_elapsed
-        self._history.insert(0, self._reading)
-        self._history = self._history[:self._history_length]
-        self._count = 0
-        self._time_last_reading = time.time()
-        self._new_data = True
-```
-
-- Every second (`self._time_elapsed >= 1.0`), a new reading is calculated and inserted at the start of `self._history`.
-- The history list is then truncated to the last 200 readings.
-
----
-
-### 3. **Accessing Data**
-
-- The `history` property returns a normalized version of the readings (as saturation values between 0.0 and 1.0).
-- There is **no persistent storage** (file/database) for these readings; they exist only in RAM while the program runs.
-
----
-
-### 4. **Usage in Other Parts of the Program**
-
-In [grow-monitor.py](https://github.com/jasonmvega/jasonvegapi/blob/main/grow-monitor.py), when graphing moisture levels:
-
-```python
-for x, value in enumerate(self.channel.sensor.history[:graph_width]):
-    ...
-```
-- The graph uses the in-memory `history` data from each `Moisture` instance.
-
----
-
-## **Summary Table**
-
-| Data Location      | Type      | Used for            | Persistence      |
-|--------------------|-----------|---------------------|------------------|
-| `self._history`    | List      | Recent readings     | In-memory only   |
-| `history` property | List      | Normalized values   | In-memory only   |
-
----
-
-**TL;DR:**  
-The moisture sensor data is stored in the `_history` list inside each `Moisture` object, in memory only (not written to disk).
+if __name__ == '__main__':
+    main()
