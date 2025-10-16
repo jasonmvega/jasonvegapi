@@ -1,8 +1,9 @@
-
 import time
 import datetime
 import os
-from grow.moisture import MoistureSensor
+
+from grow.moisture import Moisture
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -35,14 +36,6 @@ def get_service():
     return build('sheets', 'v4', credentials=creds)
 
 # ------------------------------------
-# READ MOISTURE DATA
-# ------------------------------------
-def read_moisture():
-    sensor = MoistureSensor()
-    readings = sensor.read_all()  # returns list of 3 moisture values
-    return readings
-
-# ------------------------------------
 # APPEND TO SHEETS
 # ------------------------------------
 def append_to_sheet(service, data):
@@ -62,15 +55,32 @@ def append_to_sheet(service, data):
     ).execute()
 
 # ------------------------------------
-# MAIN LOOP
+# ONE-SHOT DATA COLLECTION FOR CRON
 # ------------------------------------
 def main():
     service = get_service()
-    while True:
-        moisture_data = read_moisture()
-        append_to_sheet(service, moisture_data)
-        print(f"{datetime.datetime.now()} → Uploaded moisture data: {moisture_data}")
-        time.sleep(300)  # every 5 minutes (change as needed)
+
+    # Create sensor objects ONCE for each channel
+    sensor1 = Moisture(channel=1)
+    sensor2 = Moisture(channel=2)
+    sensor3 = Moisture(channel=3)
+
+    # Wait for sensors to get an accurate reading
+    print("Initializing sensors, waiting for accurate readings...")
+    time.sleep(2)
+
+    # Discard first readings (often zero on startup)
+    _ = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
+    time.sleep(1)  # Give it a little more time for first "real" pulses
+
+    readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
+
+    # Only upload if at least one reading is nonzero (optional safeguard)
+    if any(r > 0 for r in readings):
+        append_to_sheet(service, readings)
+        print(f"{datetime.datetime.now()} → Uploaded moisture data: {readings}")
+    else:
+        print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
 
 if __name__ == '__main__':
     main()
