@@ -3,6 +3,7 @@ import datetime
 import os
 
 from grow.moisture import Moisture
+import RPi.GPIO as GPIO
 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -65,22 +66,26 @@ def main():
     sensor2 = Moisture(channel=2)
     sensor3 = Moisture(channel=3)
 
-    # Wait for sensors to get an accurate reading
-    print("Initializing sensors, waiting for accurate readings...")
-    time.sleep(2)
+    try:
+        # Wait for sensors to get an accurate reading
+        print("Initializing sensors, waiting for accurate readings...")
+        time.sleep(2)
 
-    # Discard first readings (often zero on startup)
-    _ = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
-    time.sleep(1)  # Give it a little more time for first "real" pulses
+        # Discard first readings (often zero on startup)
+        _ = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
+        time.sleep(1)  # Give it a little more time for first "real" pulses
 
-    readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
+        readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
 
-    # Only upload if at least one reading is nonzero (optional safeguard)
-    if any(r > 0 for r in readings):
-        append_to_sheet(service, readings)
-        print(f"{datetime.datetime.now()} → Uploaded moisture data: {readings}")
-    else:
-        print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
+        # Only upload if at least one reading is nonzero (optional safeguard)
+        if any(r > 0 for r in readings):
+            append_to_sheet(service, readings)
+            print(f"{datetime.datetime.now()} → Uploaded moisture data: {readings}")
+        else:
+            print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
+    finally:
+        # --- Clean up GPIO interrupts before exit ---
+        GPIO.cleanup()
 
 if __name__ == '__main__':
     main()
