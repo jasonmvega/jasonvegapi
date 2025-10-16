@@ -13,10 +13,10 @@ from google.auth.transport.requests import Request
 # CONFIGURATION
 # ------------------------------------
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID'  # <-- paste from Google Sheets URL
-RANGE_NAME = 'Sheet1!A:D'
-CREDENTIALS_FILE = '/home/pi/project/credentials.json'
-TOKEN_FILE = '/home/pi/project/token.json'
+SPREADSHEET_ID = '1fTo3iM-Cx3aHHIhCSZdE_poF8YB6l79xb78klvEHR98'  # <-- paste from Google Sheets URL
+RANGE_NAME = 'Sheet6!A:D'
+CREDENTIALS_FILE = '/home/jasonvega/Desktop/project/moisture_credentials.json'
+TOKEN_FILE = '/home/jasonvega/Desktop/project/moisture_token.json'
 
 # ------------------------------------
 # GOOGLE AUTH SETUP
