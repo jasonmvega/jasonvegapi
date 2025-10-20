@@ -64,7 +64,6 @@ def append_saturation_to_sheet(service, sats):
             body=body
         ).execute()
     except Exception as e:
-        # If Sheets fails we still want to cleanup GPIO and exit gracefully
         print(f"Google Sheets append failed: {e}", file=sys.stderr)
 
 # ------------------------------------
@@ -73,19 +72,20 @@ def append_saturation_to_sheet(service, sats):
 def main():
     service = get_service()
 
-    # Create sensor objects ONCE for each channel
-    sensor1 = Moisture(channel=1)
-    sensor2 = Moisture(channel=2)
-    sensor3 = Moisture(channel=3)
-
+    # Try/except/finally to ensure GPIO cleanup even on error
     try:
+        # Create sensor objects ONCE for each channel
+        sensor1 = Moisture(channel=1)
+        sensor2 = Moisture(channel=2)
+        sensor3 = Moisture(channel=3)
+
         # Give sensors time to start counting pulses
         print("Initializing sensors, waiting for accurate readings...")
-        time.sleep(2)
+        time.sleep(2.5)
 
         # Discard first readings (often zero on startup)
         _ = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
-        time.sleep(1)  # extra small delay for first real pulses
+        time.sleep(1.5)  # extra small delay for first real pulses
 
         # Read saturation values (0.0 - 1.0)
         try:
@@ -103,19 +103,21 @@ def main():
 
         sats = [sat1, sat2, sat3]
 
-        # Optional safeguard: only upload if at least one sensor returned a non-None value
-        if any(s is not None for s in sats):
+        # Optional safeguard: only upload if at least one sensor returned a non-None value and is in a reasonable range
+        valid = [s for s in sats if s is not None and 0.0 <= s <= 1.0]
+        if valid:
             append_saturation_to_sheet(service, sats)
             print(f"{datetime.datetime.now()} → Uploaded saturation data (percent): {[round(s*100,2) if s is not None else None for s in sats]}")
         else:
-            print(f"{datetime.datetime.now()} → Skipped upload: sensor saturations unavailable ({sats})")
+            print(f"{datetime.datetime.now()} → Skipped upload: sensor saturations unavailable or invalid ({sats})")
     finally:
         # Ensure GPIO state is cleaned up so grow-monitor can start without conflicts
         try:
             GPIO.cleanup()
         except Exception as e:
-            # Not critical, but log to stderr
             print(f"GPIO.cleanup() failed: {e}", file=sys.stderr)
+        # Pause before exit to give the OS a moment to release the pins
+        time.sleep(0.5)
 
 if __name__ == '__main__':
     main()
