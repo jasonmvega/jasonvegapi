@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
 import time
 import datetime
 import os
+import sys
 
 from grow.moisture import Moisture
 import RPi.GPIO as GPIO
@@ -37,23 +39,33 @@ def get_service():
     return build('sheets', 'v4', credentials=creds)
 
 # ------------------------------------
-# APPEND TO SHEETS
+# APPEND SATURATION TO SHEETS
 # ------------------------------------
-def append_to_sheet(service, data):
+def append_saturation_to_sheet(service, sats):
+    """
+    sats: iterable of 3 saturation floats (0.0 - 1.0)
+    Writes timestamp and three saturation percentages to the sheet.
+    """
+    # Convert to percentage with 2 decimal places
+    vals_pct = [round(s * 100.0, 2) if s is not None else None for s in sats]
     values = [[
         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        data[0],
-        data[1],
-        data[2]
+        vals_pct[0],
+        vals_pct[1],
+        vals_pct[2]
     ]]
     body = {'values': values}
-    service.spreadsheets().values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range=RANGE_NAME,
-        valueInputOption='RAW',
-        insertDataOption='INSERT_ROWS',
-        body=body
-    ).execute()
+    try:
+        service.spreadsheets().values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range=RANGE_NAME,
+            valueInputOption='RAW',
+            insertDataOption='INSERT_ROWS',
+            body=body
+        ).execute()
+    except Exception as e:
+        # If Sheets fails we still want to cleanup GPIO and exit gracefully
+        print(f"Google Sheets append failed: {e}", file=sys.stderr)
 
 # ------------------------------------
 # ONE-SHOT DATA COLLECTION FOR CRON
@@ -67,25 +79,43 @@ def main():
     sensor3 = Moisture(channel=3)
 
     try:
-        # Wait for sensors to get an accurate reading
+        # Give sensors time to start counting pulses
         print("Initializing sensors, waiting for accurate readings...")
         time.sleep(2)
 
         # Discard first readings (often zero on startup)
         _ = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
-        time.sleep(1)  # Give it a little more time for first "real" pulses
+        time.sleep(1)  # extra small delay for first real pulses
 
-        readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
+        # Read saturation values (0.0 - 1.0)
+        try:
+            sat1 = sensor1.saturation
+        except Exception:
+            sat1 = None
+        try:
+            sat2 = sensor2.saturation
+        except Exception:
+            sat2 = None
+        try:
+            sat3 = sensor3.saturation
+        except Exception:
+            sat3 = None
 
-        # Only upload if at least one reading is nonzero (optional safeguard)
-        if any(r > 0 for r in readings):
-            append_to_sheet(service, readings)
-            print(f"{datetime.datetime.now()} → Uploaded moisture data: {readings}")
+        sats = [sat1, sat2, sat3]
+
+        # Optional safeguard: only upload if at least one sensor returned a non-None value
+        if any(s is not None for s in sats):
+            append_saturation_to_sheet(service, sats)
+            print(f"{datetime.datetime.now()} → Uploaded saturation data (percent): {[round(s*100,2) if s is not None else None for s in sats]}")
         else:
-            print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
+            print(f"{datetime.datetime.now()} → Skipped upload: sensor saturations unavailable ({sats})")
     finally:
-        # --- Clean up GPIO interrupts before exit ---
-        GPIO.cleanup()
+        # Ensure GPIO state is cleaned up so grow-monitor can start without conflicts
+        try:
+            GPIO.cleanup()
+        except Exception as e:
+            # Not critical, but log to stderr
+            print(f"GPIO.cleanup() failed: {e}", file=sys.stderr)
 
 if __name__ == '__main__':
     main()
