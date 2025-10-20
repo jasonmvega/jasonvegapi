@@ -1,4 +1,3 @@
-
 import time
 import datetime
 import os
@@ -20,6 +19,10 @@ RANGE_NAME = 'Sheet6!A:D'
 CREDENTIALS_FILE = '/home/jasonvega/Desktop/project/moisture_credentials.json'
 TOKEN_FILE = '/home/jasonvega/Desktop/project/moisture_token.json'
 
+# Moisture calibration values (update these based on your sensor calibration!)
+MOISTURE_MIN = 300  # Dry value
+MOISTURE_MAX = 800  # Wet value
+
 # ------------------------------------
 # GOOGLE AUTH SETUP
 # ------------------------------------
@@ -36,6 +39,16 @@ def get_service():
         with open(TOKEN_FILE, 'w') as token:
             token.write(creds.to_json())
     return build('sheets', 'v4', credentials=creds)
+
+# ------------------------------------
+# MOISTURE TO PERCENTAGE
+# ------------------------------------
+def moisture_to_percent(value):
+    # Clamp value between min and max
+    value = max(MOISTURE_MIN, min(MOISTURE_MAX, value))
+    # Map to percentage (0 = dry, 100 = wet)
+    percent = int(round((value - MOISTURE_MIN) / (MOISTURE_MAX - MOISTURE_MIN) * 100))
+    return percent
 
 # ------------------------------------
 # APPEND TO SHEETS
@@ -77,11 +90,13 @@ def main():
         time.sleep(1)  # Give it a little more time for first "real" pulses
 
         readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
+        readings_percent = [moisture_to_percent(r) for r in readings]
 
         # Only upload if at least one reading is nonzero (optional safeguard)
         if any(r > 0 for r in readings):
             append_to_sheet(service, readings)
             print(f"{datetime.datetime.now()} → Uploaded moisture data: {readings}")
+            print(f"Readings as percentage: {readings_percent[0]}%, {readings_percent[1]}%, {readings_percent[2]}%")
         else:
             print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
     finally:
