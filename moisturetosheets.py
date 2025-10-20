@@ -1,3 +1,4 @@
+
 import time
 import datetime
 import os
@@ -45,20 +46,20 @@ def get_service():
 # ------------------------------------
 def moisture_to_percent(value):
     # Clamp value between min and max
-    value = max(MOISTURE_MIN, min(MOISTURE_MAX, value))
+    clamped = max(MOISTURE_MIN, min(MOISTURE_MAX, value))
     # Map to percentage (0 = dry, 100 = wet)
-    percent = int(round((value - MOISTURE_MIN) / (MOISTURE_MAX - MOISTURE_MIN) * 100))
+    percent = int(round((clamped - MOISTURE_MIN) / (MOISTURE_MAX - MOISTURE_MIN) * 100))
     return percent
 
 # ------------------------------------
 # APPEND TO SHEETS
 # ------------------------------------
-def append_to_sheet(service, data):
+def append_to_sheet(service, data_percent):
     values = [[
         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        data[0],
-        data[1],
-        data[2]
+        data_percent[0],
+        data_percent[1],
+        data_percent[2]
     ]]
     body = {'values': values}
     service.spreadsheets().values().append(
@@ -92,11 +93,10 @@ def main():
         readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
         readings_percent = [moisture_to_percent(r) for r in readings]
 
-        # Only upload if at least one reading is nonzero (optional safeguard)
+        # Only upload if at least one raw reading is nonzero (optional safeguard)
         if any(r > 0 for r in readings):
-            append_to_sheet(service, readings)
-            print(f"{datetime.datetime.now()} → Uploaded moisture data: {readings}")
-            print(f"Readings as percentage: {readings_percent[0]}%, {readings_percent[1]}%, {readings_percent[2]}%")
+            append_to_sheet(service, readings_percent)
+            print(f"{datetime.datetime.now()} → Uploaded moisture percentage: {readings_percent}")
         else:
             print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
     finally:
