@@ -1,107 +1,76 @@
-
-import time
-import datetime
 import os
-
+import time
+from datetime import datetime
 from grow.moisture import Moisture
-import RPi.GPIO as GPIO
-
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
+from googleapiclient.errors import HttpError
 
-# ------------------------------------
-# CONFIGURATION
-# ------------------------------------
+# --- Google Sheets API setup ---
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SPREADSHEET_ID = '1fTo3iM-Cx3aHHIhCSZdE_poF8YB6l79xb78klvEHR98'  # <-- paste from Google Sheets URL
+SPREADSHEET_ID = '1fTo3iM-Cx3aHHIhCSZdE_poF8YB6l79xb78klvEHR98'
 RANGE_NAME = 'Sheet6!A:D'
-CREDENTIALS_FILE = '/home/jasonvega/Desktop/project/moisture_credentials.json'
-TOKEN_FILE = '/home/jasonvega/Desktop/project/moisture_token.json'
 
-# Moisture calibration values (update these based on your sensor calibration!)
-MOISTURE_MIN = 300  # Dry value
-MOISTURE_MAX = 800  # Wet value
+BASE_DIR = '/home/jasonvega/Desktop/project'
+TOKEN_PATH = os.path.join(BASE_DIR, '/home/jasonvega/Desktop/project/moisture_token.json')
+CREDS_PATH = os.path.join(BASE_DIR, '/home/jasonvega/Desktop/project/moisture_credentials.json')
 
-# ------------------------------------
-# GOOGLE AUTH SETUP
-# ------------------------------------
-def get_service():
+m1 = Moisture(1)
+m2 = Moisture(2)
+m3 = Moisture(3)
+
+dry_points = [27, 27, 27]
+wet_points  = [3, 3, 3]
+
+def moisture_percentage(reading, dry, wet):
+    if dry <= wet:
+        return 0
+    pct = (dry - reading) / (dry - wet) * 100
+    return max(0, min(100, pct))
+
+def get_sheets_service():
     creds = None
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(CREDS_PATH, SCOPES)
             creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, 'w') as token:
+        with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
     return build('sheets', 'v4', credentials=creds)
 
-# ------------------------------------
-# MOISTURE TO PERCENTAGE
-# ------------------------------------
-def moisture_to_percent(value):
-    # Clamp value between min and max
-    clamped = max(MOISTURE_MIN, min(MOISTURE_MAX, value))
-    # Map to percentage (0 = dry, 100 = wet)
-    percent = int(round((clamped - MOISTURE_MIN) / (MOISTURE_MAX - MOISTURE_MIN) * 100))
-    return percent
-
-# ------------------------------------
-# APPEND TO SHEETS
-# ------------------------------------
-def append_to_sheet(service, data_percent):
-    values = [[
-        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        data_percent[0],
-        data_percent[1],
-        data_percent[2]
-    ]]
-    body = {'values': values}
-    service.spreadsheets().values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range=RANGE_NAME,
-        valueInputOption='RAW',
-        insertDataOption='INSERT_ROWS',
-        body=body
-    ).execute()
-
-# ------------------------------------
-# ONE-SHOT DATA COLLECTION FOR CRON
-# ------------------------------------
 def main():
-    service = get_service()
+    _ = [m.moisture for m in (m1, m2, m3)] 
+    time.sleep(2.0)  
+    _ = [m.moisture for m in (m1, m2, m3)]   
 
-    # Create sensor objects ONCE for each channel
-    sensor1 = Moisture(channel=1)
-    sensor2 = Moisture(channel=2)
-    sensor3 = Moisture(channel=3)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    r1, r2, r3 = m1.moisture, m2.moisture, m3.moisture
+    pct1 = moisture_percentage(r1, dry_points[0], wet_points[0])
+    pct2 = moisture_percentage(r2, dry_points[1], wet_points[1])
+    pct3 = moisture_percentage(r3, dry_points[2], wet_points[2])
+
+    print(f"{timestamp} | Moisture:   1 = {pct1:.1f}%   2 = {pct2:.1f}%   3 = {pct3:.1f}%")
 
     try:
-        # Wait for sensors to get an accurate reading
-        print("Initializing sensors, waiting for accurate readings...")
-        time.sleep(2)
-
-        # Discard first readings (often zero on startup)
-        _ = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
-        time.sleep(1)  # Give it a little more time for first "real" pulses
-
-        readings = [sensor1.moisture, sensor2.moisture, sensor3.moisture]
-        readings_percent = [moisture_to_percent(r) for r in readings]
-
-        # Only upload if at least one raw reading is nonzero (optional safeguard)
-        if any(r > 0 for r in readings):
-            append_to_sheet(service, readings_percent)
-            print(f"{datetime.datetime.now()} → Uploaded moisture percentage: {readings_percent}")
-        else:
-            print(f"{datetime.datetime.now()} → Skipped upload: sensor readings are zero ({readings})")
-    finally:
-        # --- Clean up GPIO interrupts before exit ---
-        GPIO.cleanup()
+        sheets_service = get_sheets_service()
+        values = [[timestamp, f"{pct1:.1f}", f"{pct2:.1f}", f"{pct3:.1f}"]]
+        body = {'values': values}
+        sheets_service.spreadsheets().values().append(
+            spreadsheetId=SPREADSHEET_ID,
+            range=RANGE_NAME,
+            valueInputOption='RAW',
+            insertDataOption='INSERT_ROWS',
+            body=body
+        ).execute()
+        print("✅ Moisture data uploaded successfully!")
+    except HttpError as e:
+        print(f"❌ Google Sheets upload failed: {e}")
 
 if __name__ == '__main__':
     main()
