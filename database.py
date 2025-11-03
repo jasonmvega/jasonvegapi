@@ -78,19 +78,20 @@ def log_pump_events():
     """Parse recent Grow HAT watering events and add them to the database."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
-    # Create table if it doesn’t exist
+
+    # Create table with UNIQUE constraint
     c.execute("""
         CREATE TABLE IF NOT EXISTS pump_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT,
             channel INTEGER,
             rate REAL,
-            duration REAL
+            duration REAL,
+            UNIQUE(timestamp, channel, rate, duration)
         )
     """)
 
-    # Open and search the last 200 lines for watering events
+    # Read last 200 lines of syslog
     with open(SYSLOG_PATH, "r") as f:
         lines = f.readlines()[-200:]
 
@@ -98,6 +99,7 @@ def log_pump_events():
         r"Watering Channel: (\d+) - rate ([\d.]+) for ([\d.]+)sec"
     )
 
+    new_entries = 0
     for line in lines:
         match = pattern.search(line)
         if match:
@@ -105,15 +107,20 @@ def log_pump_events():
             rate = float(match.group(2))
             duration = float(match.group(3))
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            c.execute(
-                "INSERT INTO pump_log (timestamp, channel, rate, duration) VALUES (?, ?, ?, ?)",
-                (timestamp, channel, rate, duration),
-            )
+
+            try:
+                c.execute(
+                    "INSERT OR IGNORE INTO pump_log (timestamp, channel, rate, duration) VALUES (?, ?, ?, ?)",
+                    (timestamp, channel, rate, duration),
+                )
+                if c.rowcount > 0:
+                    new_entries += 1
+            except sqlite3.IntegrityError:
+                pass  # Ignore duplicates safely
 
     conn.commit()
     conn.close()
-    print("✅ Pump events logged successfully!")
-
+    print(f"✅ Logged {new_entries} new pump event(s).")
 
 # ==========================
 # Moisture Sensor Functions
