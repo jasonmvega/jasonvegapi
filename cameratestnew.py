@@ -10,8 +10,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 # Paths
-CREDENTIALS_PATH = "/home/jasonvega/Desktop/sheets_credentials.json"
-TOKEN_PATH = "/home/jasonvega/Desktop/sheets_token.json"
+CREDENTIALS_PATH = "/home/jasonvega/Desktop/project/photos_credentials.json"
+TOKEN_PATH = "/home/jasonvega/Desktop/project/photos_token.json"
 
 # Google Photos scopes: upload + album create
 SCOPES = [
