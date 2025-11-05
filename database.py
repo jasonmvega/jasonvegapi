@@ -74,12 +74,30 @@ def log_to_db(timestamp, temp, light, m1_val, m2_val, m3_val):
 # Pump log parser (user-supplied)
 # ==========================
 
+import re
+import sqlite3
+
+SYSLOG_PATH = "/var/log/syslog"
+DB_PATH = "/home/jasonvega/Desktop/project/plants.db"
+
+import re
+import sqlite3
+from datetime import datetime
+
+SYSLOG_PATHS = [
+    "/var/log/syslog",
+    "/var/log/syslog.1"
+]
+
+DB_PATH = "/home/jasonvega/Desktop/project/plants.db"
+
 def log_pump_events():
-    """Parse recent Grow HAT watering events and add them to the database."""
+    """Parse Grow HAT watering events from current and previous syslog, store only new events with real timestamps."""
+    
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    # Create table with UNIQUE constraint
+    # Make sure table exists
     c.execute("""
         CREATE TABLE IF NOT EXISTS pump_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,36 +109,50 @@ def log_pump_events():
         )
     """)
 
-    # Read last 200 lines of syslog
-    with open(SYSLOG_PATH, "r") as f:
-        lines = f.readlines()[-200:]
-
+    # Pattern matches: 2025-11-04 12:00:57,269 INFO: Watering Channel: 1 - rate 0.60 for 1.00sec
     pattern = re.compile(
-        r"Watering Channel: (\d+) - rate ([\d.]+) for ([\d.]+)sec"
+        r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d+ .*Watering Channel: (\d+) - rate ([\d.]+) for ([\d.]+)sec"
     )
 
-    new_entries = 0
-    for line in lines:
-        match = pattern.search(line)
-        if match:
-            channel = int(match.group(1))
-            rate = float(match.group(2))
-            duration = float(match.group(3))
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    events = []
 
-            try:
-                c.execute(
-                    "INSERT OR IGNORE INTO pump_log (timestamp, channel, rate, duration) VALUES (?, ?, ?, ?)",
-                    (timestamp, channel, rate, duration),
-                )
-                if c.rowcount > 0:
-                    new_entries += 1
-            except sqlite3.IntegrityError:
-                pass  # Ignore duplicates safely
+    for path in SYSLOG_PATHS:
+        try:
+            with open(path, "r") as f:
+                for line in f:
+                    match = pattern.search(line)
+                    if match:
+                        timestamp = match.group(1)
+                        channel = int(match.group(2))
+                        rate = float(match.group(3))
+                        duration = float(match.group(4))
+                        events.append((timestamp, channel, rate, duration))
+        except FileNotFoundError:
+            continue
+
+    # Sort events by real timestamps (oldest → newest)
+    events.sort(key=lambda x: x[0])
+
+    # Insert only new events
+    inserted = 0
+    for event in events:
+        try:
+            c.execute(
+                "INSERT OR IGNORE INTO pump_log (timestamp, channel, rate, duration) VALUES (?, ?, ?, ?)",
+                event
+            )
+            if c.rowcount > 0:
+                inserted += 1
+        except:
+            pass
 
     conn.commit()
     conn.close()
-    print(f"✅ Logged {new_entries} new pump event(s).")
+
+    if inserted > 0:
+        print(f"✅ Logged {inserted} new pump event(s).")
+    else:
+        print("ℹ️ No new pump events found.")
 
 # ==========================
 # Moisture Sensor Functions
